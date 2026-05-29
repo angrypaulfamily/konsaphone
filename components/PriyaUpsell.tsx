@@ -26,7 +26,7 @@ export default function PriyaUpsell({ phone1, phone2 }: PriyaUpsellProps) {
                 Confused ho? Main Priya hoon 👋
               </p>
               <p className="text-orange-100 text-sm mt-1 leading-relaxed">
-                Main tujhe sahi phone choose karwa sakti hoon. Bas 3 sawaal, aur tera perfect phone ready!
+                Main aapko sahi phone choose karwa sakti hoon. Bas 3 sawaal, aur aapka perfect phone ready!
               </p>
             </div>
           </div>
