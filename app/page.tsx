@@ -1,8 +1,7 @@
-import { Suspense } from 'react'
 import Navbar from '@/components/Navbar'
 
 export const dynamic = 'force-dynamic'
-import PopularPhones from '@/components/PopularPhones'
+import PriceBrowse from '@/components/PriceBrowse'
 import HomeSearch from '@/components/HomeSearch'
 import { Smartphone, Zap, Trophy } from 'lucide-react'
 
@@ -34,7 +33,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-gray-500 text-sm mb-8 max-w-sm">
-            2 phones compare karo side by side. Priya tumhe bata degi - kaunsa lena chahiye aur kyun.
+            2 phones compare karo side by side. Priya aapko bata degi - kaunsa lena chahiye aur kyun.
           </p>
 
           <HomeSearch />
@@ -57,15 +56,7 @@ export default function HomePage() {
       </section>
 
       <div className="max-w-2xl mx-auto px-4 pb-16">
-        <Suspense fallback={
-          <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-gray-100 rounded-2xl animate-pulse" />
-            ))}
-          </div>
-        }>
-          <PopularPhones />
-        </Suspense>
+        <PriceBrowse />
       </div>
     </div>
   )

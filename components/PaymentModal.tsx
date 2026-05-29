@@ -237,7 +237,7 @@ export default function PaymentModal({ tier, phone1, phone2, onClose }: PaymentM
             </p>
             <p className="text-orange-100 text-xs">
               {step === 'pay' && 'UPI se 1 tap mein pay karo'}
-              {step === 'questions' && 'Taaki main tumhare liye best phone find kar sakoon'}
+              {step === 'questions' && 'Taaki main aapke liye best phone find kar sakoon'}
               {step === 'processing' && 'Thoda wait karo, aa rahi hoon main...'}
             </p>
           </div>

@@ -35,7 +35,23 @@ export async function GET(request: NextRequest) {
     return Response.json({ phones: data || [] })
   }
 
-  // Popular phones (no filter)
+  // Price filter
+  const maxPrice = searchParams.get('max_price')
+  if (maxPrice) {
+    const { data, error } = await supabase
+      .from('phones')
+      .select('*')
+      .lte('price_inr', parseInt(maxPrice))
+      .order('price_inr', { ascending: true })
+      .limit(12)
+
+    if (error) {
+      return Response.json({ error: 'Failed to fetch phones' }, { status: 500 })
+    }
+    return Response.json({ phones: data || [] })
+  }
+
+  // All phones (no filter)
   const { data, error } = await supabase
     .from('phones')
     .select('*')
