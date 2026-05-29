@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         },
         { role: 'user', content: prompt },
       ],
-      max_tokens: 400,
+      max_tokens: order.tier === 99 ? 1000 : 400,
       temperature: 0.7,
     })
 

@@ -33,31 +33,25 @@ export default async function ResultPage({ params }: ResultPageProps) {
 
   const order = verdict.orders as { tier: 49 | 99; phone_ids: string[] }
 
-  // Fetch phone details for context display
+  // Fetch all unique phone IDs - order phones + any extras from alternatives
+  const altPhoneIds = verdict.alternatives
+    ? (verdict.alternatives as AlternativePhone[]).map((a) => a.phone_id).filter(Boolean)
+    : []
+  const allPhoneIds = [...new Set([...(order.phone_ids || []), ...altPhoneIds])]
+
   let phones: Phone[] = []
-  if (order.phone_ids?.length) {
+  if (allPhoneIds.length) {
     const { data } = await supabaseAdmin
       .from('phones')
       .select('*')
-      .in('id', order.phone_ids)
+      .in('id', allPhoneIds)
     phones = (data as Phone[]) || []
   }
 
-  // Enrich alternatives with phone data
-  let alternatives: AlternativePhone[] | undefined
-  if (verdict.alternatives && phones.length) {
-    alternatives = (verdict.alternatives as AlternativePhone[]).map((alt) => {
-      const phone = phones.find(
-        (p) => p.id === alt.phone_id || p.name.toLowerCase().includes(alt.phone_name?.toLowerCase())
-      )
-      return {
-        ...alt,
-        flipkart_url: phone?.flipkart_url || null,
-        amazon_url: phone?.amazon_url || null,
-        price_inr: phone?.price_inr || alt.price_inr || 0,
-      }
-    })
-  }
+  // Use alternatives as saved (already enriched at verdict creation time)
+  const alternatives: AlternativePhone[] | undefined = verdict.alternatives
+    ? (verdict.alternatives as AlternativePhone[])
+    : undefined
 
   const useCase = (verdict.answers as { use_case: string })?.use_case
   const useCaseLabel: Record<string, string> = {

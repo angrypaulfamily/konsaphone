@@ -12,7 +12,7 @@ interface PriyaVerdictProps {
 }
 
 export default function PriyaVerdict({ verdictText, tier, alternatives }: PriyaVerdictProps) {
-  const [showAlts, setShowAlts] = useState(false)
+  const [showAlts, setShowAlts] = useState(true)
 
   const paragraphs = verdictText.split('\n').filter((p) => p.trim())
 
