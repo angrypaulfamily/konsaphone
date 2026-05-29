@@ -6,9 +6,24 @@ import Navbar from '@/components/Navbar'
 import SearchBar from '@/components/SearchBar'
 import CompareTable from '@/components/CompareTable'
 import PriyaUpsell from '@/components/PriyaUpsell'
+import StickyCompareBar from '@/components/StickyCompareBar'
 import { Phone } from '@/types'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+
+const DEFAULT_PHONE_NAMES = ['Redmi Note 15 Pro', 'OnePlus Nord CE 6']
+
+async function fetchPhoneById(id: string): Promise<Phone | null> {
+  const res = await fetch(`/api/phones?id=${id}`)
+  const data = await res.json()
+  return data.phone || null
+}
+
+async function fetchPhoneByName(name: string): Promise<Phone | null> {
+  const res = await fetch(`/api/phones?q=${encodeURIComponent(name)}`)
+  const data = await res.json()
+  return data.phones?.[0] || null
+}
 
 function CompareContent() {
   const searchParams = useSearchParams()
@@ -20,21 +35,26 @@ function CompareContent() {
   const [phone2, setPhone2] = useState<Phone | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function fetchPhone(id: string): Promise<Phone | null> {
-    const res = await fetch(`/api/phones?id=${id}`)
-    const data = await res.json()
-    return data.phone || null
-  }
-
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const [p1, p2] = await Promise.all([
-        phone1Id ? fetchPhone(phone1Id) : Promise.resolve(null),
-        phone2Id ? fetchPhone(phone2Id) : Promise.resolve(null),
-      ])
-      setPhone1(p1)
-      setPhone2(p2)
+
+      if (!phone1Id && !phone2Id) {
+        // Load defaults
+        const [p1, p2] = await Promise.all(
+          DEFAULT_PHONE_NAMES.map(fetchPhoneByName)
+        )
+        setPhone1(p1)
+        setPhone2(p2)
+      } else {
+        const [p1, p2] = await Promise.all([
+          phone1Id ? fetchPhoneById(phone1Id) : Promise.resolve(null),
+          phone2Id ? fetchPhoneById(phone2Id) : Promise.resolve(null),
+        ])
+        setPhone1(p1)
+        setPhone2(p2)
+      }
+
       setLoading(false)
     }
     load()
@@ -57,12 +77,13 @@ function CompareContent() {
     updateUrl(phone1, phone)
   }
 
+  const bothSelected = !!(phone1 && phone2)
+
   return (
     <div className="min-h-screen bg-[#FFFBF5]">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Back link */}
+      <div className={`max-w-2xl mx-auto px-4 py-6 ${bothSelected ? 'pb-24' : ''}`}>
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4">
           <ArrowLeft className="w-4 h-4" />
           Wapas jao
@@ -75,7 +96,7 @@ function CompareContent() {
           Phone Compare karo
         </h1>
         <p className="text-sm text-gray-500 mb-6">
-          Dono phones select karo — spec by spec comparison milegi
+          Dono phones select karo - spec by spec comparison milegi
         </p>
 
         {/* Phone selectors */}
@@ -94,13 +115,13 @@ function CompareContent() {
             <SearchBar
               onSelect={handlePhone2Select}
               selectedPhone={phone2}
-              placeholder="Search phone..."
+              placeholder="Doosra phone search karo"
               excludeId={phone1?.id}
             />
           </div>
         </div>
 
-        {/* Loading state */}
+        {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-3">
@@ -110,42 +131,47 @@ function CompareContent() {
           </div>
         )}
 
-        {/* Prompt to select phones */}
-        {!loading && (!phone1 || !phone2) && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">📱</span>
+        {/* phone1 loaded, phone2 missing - show prominent prompt */}
+        {!loading && phone1 && !phone2 && (
+          <div className="mt-2">
+            {/* Show phone1 mini card so user knows it's selected */}
+            <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border-2 border-[#FF6B00]/30 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-100 to-blue-100 flex items-center justify-center text-xs font-black text-[#FF6B00] flex-shrink-0">
+                {phone1.brand.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-bold text-gray-900">{phone1.name}</p>
+                <p className="text-sm text-[#FF6B00] font-semibold">Rs.{phone1.price_inr.toLocaleString('en-IN')}</p>
+              </div>
             </div>
-            <p className="font-semibold text-gray-700">
-              {!phone1 && !phone2
-                ? 'Dono phones select karo compare karne ke liye'
-                : !phone1
-                ? 'Pehla phone select karo'
-                : 'Doosra phone select karo'}
-            </p>
-            <p className="text-sm text-gray-400 mt-1">
-              Upar search bar mein phone ka naam type karo
-            </p>
+
+            <div className="text-center py-8 bg-white rounded-3xl border-2 border-dashed border-[#FF6B00]/40">
+              <span className="text-4xl mb-3 block">📱</span>
+              <p className="font-bold text-gray-800 text-base mb-1">Doosra phone select karo!</p>
+              <p className="text-sm text-gray-400 mb-4">Upar "Phone 2" search bar mein dhundo</p>
+              <div className="flex items-center gap-2 justify-center text-[#FF6B00] text-sm font-semibold animate-bounce">
+                <span>Upar dekho</span>
+                <span>↑</span>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Compare table */}
+        {/* Both phones selected - show comparison */}
         {!loading && phone1 && phone2 && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <CompareTable phone1={phone1} phone2={phone2} />
 
-            {/* Priya upsell */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs font-bold text-gray-400 px-2">Ab kya?</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-              <PriyaUpsell phone1={phone1} phone2={phone2} />
-            </div>
+            {/* Priya upsell - right after table, impossible to miss */}
+            <PriyaUpsell phone1={phone1} phone2={phone2} />
           </div>
         )}
       </div>
+
+      {/* Sticky bottom bar */}
+      {bothSelected && phone1 && phone2 && (
+        <StickyCompareBar phone1={phone1} phone2={phone2} />
+      )}
     </div>
   )
 }

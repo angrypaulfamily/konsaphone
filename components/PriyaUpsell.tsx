@@ -49,7 +49,7 @@ export default function PriyaUpsell({ phone1, phone2 }: PriyaUpsellProps) {
                   <span className="text-sm font-bold text-gray-800">Priya ka Pick</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Kaunsa phone lena chahiye — seedha jawab, personalized to your needs
+                  Kaunsa phone lena chahiye - seedha jawab, personalized to your needs
                 </p>
               </div>
               <div className="text-[#FF6B00] opacity-0 group-hover:opacity-100 transition-opacity text-xl">→</div>

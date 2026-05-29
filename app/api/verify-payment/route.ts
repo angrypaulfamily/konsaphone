@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Missing payment details' }, { status: 400 })
     }
 
-    // Verify signature server-side — cryptographically secure
+    // Verify signature server-side - cryptographically secure
     const isValid = verifyRazorpaySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature)
 
     if (!isValid) {

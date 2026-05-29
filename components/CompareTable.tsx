@@ -86,18 +86,20 @@ export default function CompareTable({ phone1, phone2 }: CompareTableProps) {
       icon: <Monitor className="w-4 h-4" />,
       value1: `${phone1.display_size_inch}" ${phone1.display_type} ${phone1.display_hz}Hz`,
       value2: `${phone2.display_size_inch}" ${phone2.display_type} ${phone2.display_hz}Hz`,
-      plain1:
-        phone1.display_hz >= 120
-          ? 'Butter smooth scrolling'
-          : phone1.display_hz >= 90
-          ? 'Smooth scrolling'
-          : 'Standard 60fps',
-      plain2:
-        phone2.display_hz >= 120
-          ? 'Butter smooth scrolling'
-          : phone2.display_hz >= 90
-          ? 'Smooth smooth scrolling'
-          : 'Standard 60fps',
+      plain1: (() => {
+        const isAmoled = /amoled|oled/i.test(phone1.display_type)
+        const smooth = phone1.display_hz >= 120 ? 'butter smooth scrolling' : phone1.display_hz >= 90 ? 'smooth scrolling' : 'standard 60fps'
+        return isAmoled
+          ? `AMOLED display - colours are vibrant and punchy, blacks look deep, great for videos and reels. ${phone1.display_hz}Hz ${smooth}.`
+          : smooth.charAt(0).toUpperCase() + smooth.slice(1)
+      })(),
+      plain2: (() => {
+        const isAmoled = /amoled|oled/i.test(phone2.display_type)
+        const smooth = phone2.display_hz >= 120 ? 'butter smooth scrolling' : phone2.display_hz >= 90 ? 'smooth scrolling' : 'standard 60fps'
+        return isAmoled
+          ? `AMOLED display - colours are vibrant and punchy, blacks look deep, great for videos and reels. ${phone2.display_hz}Hz ${smooth}.`
+          : smooth.charAt(0).toUpperCase() + smooth.slice(1)
+      })(),
       winner: winnerByHigher(phone1.display_hz, phone2.display_hz),
       highlight: true,
     },
@@ -202,13 +204,13 @@ export default function CompareTable({ phone1, phone2 }: CompareTableProps) {
       <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-[#FF6B00]/10 to-[#1B4FD8]/10 border border-orange-200">
         <p className="text-sm font-semibold text-gray-800">
           {overallWinner === 0
-            ? `${phone1.name} aur ${phone2.name} almost barabar hain — use case ke hisaab se decide karo!`
+            ? `${phone1.name} aur ${phone2.name} almost barabar hain - use case ke hisaab se decide karo!`
             : overallWinner === 1
-            ? `Overall winner: ${phone1.name} — ${wins1} out of ${specs.length} specs mein aage hai.`
-            : `Overall winner: ${phone2.name} — ${wins2} out of ${specs.length} specs mein aage hai.`}
+            ? `Overall winner: ${phone1.name} - ${wins1} out of ${specs.length} specs mein aage hai.`
+            : `Overall winner: ${phone2.name} - ${wins2} out of ${specs.length} specs mein aage hai.`}
         </p>
         <p className="text-xs text-gray-500 mt-1">
-          Lekin specs sirf ek picture hai — apna use case bhi matter karta hai!
+          Lekin specs sirf ek picture hai - apna use case bhi matter karta hai!
         </p>
       </div>
     </div>

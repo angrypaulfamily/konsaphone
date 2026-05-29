@@ -5,7 +5,7 @@ import { Share2 } from 'lucide-react'
 export default function ShareButton() {
   function handleShare() {
     if (navigator.share) {
-      navigator.share({ title: 'KonsaPhone — Priya ka Verdict', url: window.location.href })
+      navigator.share({ title: 'KonsaPhone - Priya ka Verdict', url: window.location.href })
     } else {
       navigator.clipboard.writeText(window.location.href)
     }

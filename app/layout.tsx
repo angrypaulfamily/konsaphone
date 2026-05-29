@@ -16,12 +16,12 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: 'KonsaPhone — Ab Pata Chalega',
+  title: 'KonsaPhone - Ab Pata Chalega',
   description:
     'India ka smartest phone comparison app. Compare phones side by side, get Priya ki personal recommendation. Sahi phone choose karo!',
   keywords: 'phone comparison india, best phone india, konsaphone, priya phone recommendation',
   openGraph: {
-    title: 'KonsaPhone — Ab Pata Chalega',
+    title: 'KonsaPhone - Ab Pata Chalega',
     description: 'Compare phones. Get Priya ki sahi recommendation. No confusion.',
     siteName: 'KonsaPhone',
     locale: 'en_IN',

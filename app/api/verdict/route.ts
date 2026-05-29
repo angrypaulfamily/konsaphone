@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { anthropic, buildPriyaPrompt } from '@/lib/anthropic'
+import { getGroq, buildPriyaPrompt } from '@/lib/groq'
 import { Phone, UserAnswers, AlternativePhone } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verify payment before generating verdict
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .select('id, status, tier, phone_ids')
@@ -32,7 +31,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Payment not confirmed' }, { status: 402 })
     }
 
-    // Fetch phone details
     const { data: phones, error: phonesError } = await supabaseAdmin
       .from('phones')
       .select('*')
@@ -44,24 +42,22 @@ export async function POST(request: NextRequest) {
 
     const prompt = buildPriyaPrompt(phones as Phone[], answers, order.tier as 49 | 99)
 
-    // Call Anthropic API with prompt caching for system prompt
-    const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      system: [
+    const groq = getGroq()
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
         {
-          type: 'text',
-          text: 'You are Priya, a warm and knowledgeable Indian phone expert who gives recommendations like a trusted dost. Always respond in Hinglish — natural mix of Hindi and English. Be direct, warm, and never robotic.',
-          cache_control: { type: 'ephemeral' },
+          role: 'system',
+          content: 'You are Priya, a confident Indian friend who gives direct phone recommendations in Hinglish. Be decisive and brief.',
         },
+        { role: 'user', content: prompt },
       ],
-      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 400,
+      temperature: 0.7,
     })
 
-    const responseText =
-      message.content[0].type === 'text' ? message.content[0].text : ''
+    const responseText = completion.choices[0]?.message?.content || ''
 
-    // Extract alternatives JSON if present (₹99 tier)
     let alternatives: AlternativePhone[] | null = null
     if (order.tier === 99) {
       const jsonMatch = responseText.match(/```json\n([\s\S]*?)\n```/)
@@ -70,43 +66,33 @@ export async function POST(request: NextRequest) {
           const parsed = JSON.parse(jsonMatch[1])
           if (parsed.alternatives) {
             alternatives = parsed.alternatives.map(
-              (alt: { rank: number; name: string; reason: string }, i: number) => ({
-                rank: alt.rank || i + 1,
-                phone_id: phones.find((p) =>
+              (alt: { rank: number; name: string; reason: string }, i: number) => {
+                const match = phones.find((p) =>
                   p.name.toLowerCase().includes(alt.name?.toLowerCase())
-                )?.id || '',
-                phone_name: alt.name,
-                reason: alt.reason,
-                flipkart_url:
-                  phones.find((p) => p.name.toLowerCase().includes(alt.name?.toLowerCase()))
-                    ?.flipkart_url || null,
-                amazon_url:
-                  phones.find((p) => p.name.toLowerCase().includes(alt.name?.toLowerCase()))
-                    ?.amazon_url || null,
-                price_inr:
-                  phones.find((p) => p.name.toLowerCase().includes(alt.name?.toLowerCase()))
-                    ?.price_inr || 0,
-              })
+                )
+                return {
+                  rank: alt.rank || i + 1,
+                  phone_id: match?.id || '',
+                  phone_name: alt.name,
+                  reason: alt.reason,
+                  flipkart_url: match?.flipkart_url || null,
+                  amazon_url: match?.amazon_url || null,
+                  price_inr: match?.price_inr || 0,
+                }
+              }
             )
           }
         } catch {
-          // Non-critical — proceed without alternatives
+          // Non-critical
         }
       }
     }
 
-    // Clean verdict text (remove JSON block)
     const cleanVerdict = responseText.replace(/```json[\s\S]*?```/g, '').trim()
 
-    // Save verdict to DB
     const { data: verdict, error: verdictError } = await supabaseAdmin
       .from('verdicts')
-      .insert({
-        order_id,
-        answers,
-        verdict_text: cleanVerdict,
-        alternatives,
-      })
+      .insert({ order_id, answers, verdict_text: cleanVerdict, alternatives })
       .select('id')
       .single()
 

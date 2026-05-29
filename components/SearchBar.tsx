@@ -13,7 +13,7 @@ interface SearchBarProps {
 
 export default function SearchBar({
   onSelect,
-  placeholder = 'Phone search karo... (e.g. Redmi Note 13)',
+  placeholder = 'Phone search karo...',
   excludeId,
   selectedPhone,
 }: SearchBarProps) {
@@ -25,22 +25,17 @@ export default function SearchBar({
   const containerRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const search = useCallback(
+  const fetchPhones = useCallback(
     async (q: string) => {
-      if (q.length < 2) {
-        setResults([])
-        setOpen(false)
-        return
-      }
       setLoading(true)
       try {
-        const res = await fetch(`/api/phones?q=${encodeURIComponent(q)}`)
+        const url = q.length >= 2 ? `/api/phones?q=${encodeURIComponent(q)}` : '/api/phones'
+        const res = await fetch(url)
         const data = await res.json()
         const filtered = excludeId
           ? data.phones.filter((p: Phone) => p.id !== excludeId)
           : data.phones
         setResults(filtered)
-        setOpen(true)
       } catch {
         setResults([])
       } finally {
@@ -50,13 +45,20 @@ export default function SearchBar({
     [excludeId]
   )
 
+  // Load all phones immediately on focus
+  function handleFocus() {
+    setOpen(true)
+    if (results.length === 0) fetchPhones('')
+  }
+
   useEffect(() => {
+    if (!open) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(query), 300)
+    debounceRef.current = setTimeout(() => fetchPhones(query), 250)
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [query, search])
+  }, [query, open, fetchPhones])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -77,7 +79,8 @@ export default function SearchBar({
   function clearSelection() {
     onSelect(null as unknown as Phone)
     setQuery('')
-    inputRef.current?.focus()
+    setResults([])
+    setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   if (selectedPhone) {
@@ -86,7 +89,7 @@ export default function SearchBar({
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900 truncate">{selectedPhone.name}</p>
           <p className="text-sm text-gray-500">
-            ₹{selectedPhone.price_inr.toLocaleString('en-IN')} · {selectedPhone.brand}
+            Rs.{selectedPhone.price_inr.toLocaleString('en-IN')} · {selectedPhone.brand}
           </p>
         </div>
         <button
@@ -113,6 +116,7 @@ export default function SearchBar({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onFocus={handleFocus}
           placeholder={placeholder}
           className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder:text-gray-400"
           autoComplete="off"
@@ -125,8 +129,21 @@ export default function SearchBar({
         )}
       </div>
 
-      {open && results.length > 0 && (
+      {open && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden max-h-72 overflow-y-auto">
+          {loading && results.length === 0 && (
+            <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-400">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+            </div>
+          )}
+
+          {!loading && results.length === 0 && query.length >= 2 && (
+            <div className="px-4 py-6 text-center">
+              <p className="text-sm text-gray-500">Koi phone nahi mila &quot;{query}&quot; ke liye</p>
+              <p className="text-xs text-gray-400 mt-1">Brand name ya model number try karo</p>
+            </div>
+          )}
+
           {results.map((phone) => (
             <button
               key={phone.id}
@@ -139,7 +156,7 @@ export default function SearchBar({
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm text-gray-900 truncate">{phone.name}</p>
                 <p className="text-xs text-gray-500">
-                  ₹{phone.price_inr.toLocaleString('en-IN')} · {phone.ram_gb}GB RAM · {phone.camera_mp}MP
+                  Rs.{phone.price_inr.toLocaleString('en-IN')} · {phone.ram_gb}GB RAM · {phone.camera_mp}MP
                 </p>
               </div>
               {phone.has_5g && (
@@ -149,13 +166,6 @@ export default function SearchBar({
               )}
             </button>
           ))}
-        </div>
-      )}
-
-      {open && results.length === 0 && query.length >= 2 && !loading && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 px-4 py-6 text-center">
-          <p className="text-sm text-gray-500">Koi phone nahi mila &quot;{query}&quot; ke liye</p>
-          <p className="text-xs text-gray-400 mt-1">Try karo: brand name ya model number</p>
         </div>
       )}
     </div>

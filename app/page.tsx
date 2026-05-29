@@ -34,7 +34,7 @@ export default function HomePage() {
           </h1>
 
           <p className="text-gray-500 text-sm mb-8 max-w-sm">
-            2 phones compare karo side by side. Priya tumhe bata degi — kaunsa lena chahiye aur kyun.
+            2 phones compare karo side by side. Priya tumhe bata degi - kaunsa lena chahiye aur kyun.
           </p>
 
           <HomeSearch />
