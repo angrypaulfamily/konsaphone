@@ -14,6 +14,18 @@ export default function PhoneCard({ phone, compact = false }: PhoneCardProps) {
       <div className="h-1 bg-gradient-to-r from-[#FF6B00] to-[#1B4FD8]" />
 
       <div className="p-4">
+        {/* Phone image */}
+        {phone.image_url && (
+          <div className="flex justify-center mb-2">
+            <img
+              src={phone.image_url}
+              alt={phone.name}
+              className="h-20 w-auto object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          </div>
+        )}
+
         {/* Brand + 5G badge */}
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-semibold text-[#FF6B00] uppercase tracking-wide">

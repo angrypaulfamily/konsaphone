@@ -21,6 +21,17 @@ export interface Phone {
   flipkart_url: string | null
   amazon_url: string | null
   launch_date: string | null
+  // rich fields from new DB
+  reddit_sentiment: string | null
+  reddit_praise: string | null
+  reddit_complaints: string | null
+  os: string | null
+  sw_label: string | null
+  sw_until_year: number | null
+  ip_rating: string | null
+  weight_g: number | null
+  card_slot: string | null
+  image_url: string | null
 }
 
 export interface SpecComparison {
